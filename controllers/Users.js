@@ -13,6 +13,53 @@ export const getUsers = async(req, res) => {
     }
 }
 
+export const deleteUsers = async(req, res) => {
+    try {
+        await Users.destroy({
+            where:{
+                id: req.params.id
+            }
+        });
+
+        res.status(200).json({msg: "Account Deleted!"});
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export const updateUsers = async(req, res) => {
+    try{
+        const { name, email, password } = req.body;
+        const user = await Users.findOne({
+            where: {
+                id: req.params.id
+            }
+        });
+
+        if (!user) return res.status(404).json({ msg: "User not found" });
+
+        let hashPassword = user.password;
+        if (password) {
+            const salt = await bcrypt.genSalt();
+            hashPassword = await bcrypt.hash(password, salt);
+        }
+
+        await Users.update({
+            name: name || user.name,
+            email: email || user.email,
+            password: hashPassword
+        }, {
+            where: {
+                id: req.params.id
+            }
+        });
+
+        res.status(200).json({ msg: "User updated successfully" });
+    }catch{
+        console.log(error);
+    }
+}
+
 export const Register = async(req, res) => {
     const { name, email, password, confPassword } = req.body;
     if(password !== confPassword) return res.status(400).json({msg: "Password dan Confirm Password tidak cocok"});
@@ -59,6 +106,7 @@ export const Login = async(req, res) => {
         });
         res.json({ accessToken });
     } catch (error) {
+        console.log(error)
         res.status(404).json({msg:"Email tidak ditemukan"});
     }
 }
